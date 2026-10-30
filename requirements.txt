@@ -1,5 +1,5 @@
 fastapi
 uvicorn
-google-genai
-python-dotenv
 pydantic
+google-genai
+numpy
