@@ -62,7 +62,7 @@ async def chat_endpoint(request: ChatRequest):
         
         # 3. 제미나이 모델 호출 (gemini-2.5-flash 또는 최신 플래시 모델 사용)
         response = client.models.generate_content(
-            model='gemini-2.5-flash',
+            model='gemini-3.8-flash',
             contents=prompt,
         )
         
