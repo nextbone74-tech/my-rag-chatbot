@@ -3,39 +3,34 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>사내 RAG 챗봇 (카카오톡 스타일)</title>
+    <title>사내 문서 AI 어시스턴트 (RAG)</title>
     <style>
         body {
+            font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+            background-color: #abc1d1;
             margin: 0;
             padding: 0;
-            background-color: #abc1d1; /* 카카오톡 채팅방 배경색 */
-            font-family: 'Malgun Gothic', sans-serif;
             display: flex;
-            justify-content: center;
-            align-items: center;
+            flex-direction: column;
             height: 100vh;
         }
         .chat-container {
+            flex: 1;
+            max-width: 600px;
             width: 100%;
-            max-width: 420px;
-            height: 100vh;
-            max-height: 750px;
-            background-color: #abc1d1;
+            margin: 0 auto;
+            background-color: #b2c7d9;
             display: flex;
             flex-direction: column;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-            border-radius: 12px;
-            overflow: hidden;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
         }
         .chat-header {
-            background-color: #f7e600;
+            background-color: #fee500;
             padding: 15px;
             font-weight: bold;
             font-size: 16px;
-            color: #222;
-            display: flex;
-            align-items: center;
-            border-bottom: 1px solid #e0d000;
+            color: #381e1f;
+            border-bottom: 1px solid #a3b8c9;
         }
         .chat-messages {
             flex: 1;
@@ -48,34 +43,32 @@
         .message {
             max-width: 70%;
             padding: 10px 14px;
-            border-radius: 14px;
+            border-radius: 15px;
             font-size: 14px;
             line-height: 1.4;
             word-break: break-word;
         }
         .message.user {
-            background-color: #fee500; /* 카톡 유저 노란색 */
-            color: #111;
+            background-color: #fee500;
+            color: #381e1f;
             align-self: flex-end;
             border-top-right-radius: 2px;
         }
         .message.bot {
-            background-color: #ffffff; /* 봇 흰색 */
-            color: #333;
+            background-color: #ffffff;
+            color: #000000;
             align-self: flex-start;
             border-top-left-radius: 2px;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
         }
         .chat-input-area {
-            background-color: #ffffff;
-            padding: 10px;
             display: flex;
-            gap: 8px;
+            padding: 10px;
+            background-color: #ffffff;
             border-top: 1px solid #ddd;
         }
         .chat-input-area input {
             flex: 1;
-            padding: 10px 14px;
+            padding: 10px;
             border: 1px solid #ddd;
             border-radius: 20px;
             outline: none;
@@ -83,84 +76,101 @@
         }
         .chat-input-area button {
             background-color: #fee500;
+            color: #381e1f;
             border: none;
-            padding: 0 16px;
+            padding: 10px 20px;
+            margin-left: 8px;
             border-radius: 20px;
             font-weight: bold;
             cursor: pointer;
-            color: #333;
         }
         .chat-input-area button:hover {
-            background-color: #f0d800;
+            background-color: #fada00;
         }
     </style>
 </head>
 <body>
 
-<div class="chat-container">
-    <div class="chat-header">💬 사내 문서 AI 어시스턴트 (RAG)</div>
-    <div class="chat-messages" id="chatMessages">
-        <div class="message bot">안녕하세요! 사내 문서(docs) 내용에 대해 무엇이든 물어보세요.</div>
+    <div class="chat-container">
+        <div class="chat-header">
+            💬 사내 문서 AI 어시스턴트 (RAG)
+        </div>
+        
+        <div class="chat-messages" id="chatMessages">
+            <div class="message bot">안녕하세요! 사내 문서(docs) 내용에 대해 무엇이든 물어보세요.</div>
+        </div>
+
+        <div class="chat-input-area">
+            <input type="text" id="userInput" placeholder="메시지를 입력하세요..." onkeypress="handleKeyPress(event)">
+            <button onclick="sendMessage()">전송</button>
+        </div>
     </div>
-    <div class="chat-input-area">
-        <input type="text" id="userInput" placeholder="메시지를 입력하세요..." onkeypress="handleKeyPress(event)">
-        <button onclick="sendMessage()">전송</button>
-    </div>
-</div>
 
-<script>
-    // 배포된 Render 백엔드 주소로 변경해주세요 (예: https://my-rag-chatbot.onrender.com)
-    const BACKEND_URL = "https://my-rag-chatbot-igck.onrender.com/chat";
+    <script>
+        // 백엔드와 동일한 도메인을 사용하므로 상대 경로로 지정합니다.
+        const BACKEND_URL = "/chat";
 
-    async function sendMessage() {
-        const inputField = document.getElementById("userInput");
-        const messageText = inputField.value.trim();
-        if (!messageText) return;
+        async function sendMessage() {
+            const inputField = document.getElementById("userInput");
+            const messageText = inputField.value.trim();
+            if (!messageText) return;
 
-        const chatMessages = document.getElementById("chatMessages");
+            const chatMessages = document.getElementById("chatMessages");
 
-        // 1. 유저 메시지 화면에 추가
-        const userMsgDiv = document.createElement("div");
-        userMsgDiv.className = "message user";
-        userMsgDiv.textContent = messageText;
-        chatMessages.appendChild(userMsgDiv);
+            // 1. 유저 메시지 화면 추가
+            const userMsgDiv = document.createElement("div");
+            userMsgDiv.className = "message user";
+            userMsgDiv.textContent = messageText;
+            chatMessages.appendChild(userMsgDiv);
 
-        inputField.value = "";
-        chatMessages.scrollTop = chatMessages.scrollHeight;
+            inputField.value = "";
+            chatMessages.scrollTop = chatMessages.scrollHeight;
 
-        // 2. 봇 응답 대기 메시지 추가
-        const botMsgDiv = document.createElement("div");
-        botMsgDiv.className = "message bot";
-        botMsgDiv.textContent = "생각 중...";
-        chatMessages.appendChild(botMsgDiv);
-        chatMessages.scrollTop = chatMessages.scrollHeight;
+            // 2. 봇 응답 빈 말풍선 생성 ("생각 중...")
+            const botMsgDiv = document.createElement("div");
+            botMsgDiv.className = "message bot";
+            botMsgDiv.textContent = "생각 중...";
+            chatMessages.appendChild(botMsgDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
 
-        try {
-            // 3. Render 백엔드로 요청 전송
-            const response = await fetch(BACKEND_URL, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ message: messageText })
-            });
+            try {
+                // 3. 백엔드 요청
+                const response = await fetch(BACKEND_URL, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ message: messageText })
+                });
 
-            const data = await response.json();
-            if (response.ok) {
-                botMsgDiv.textContent = data.response;
-            } else {
-                botMsgDiv.textContent = "오류가 발생했습니다: " + (data.detail || "서버 에러");
+                if (!response.ok) {
+                    const errText = await response.text();
+                    botMsgDiv.textContent = "서버 오류: " + errText;
+                    return;
+                }
+
+                // 4. 실시간 스트리밍(Reader) 처리
+                botMsgDiv.textContent = ""; 
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder("utf-8");
+
+                while (true) {
+                    const { value, done } = await reader.read();
+                    if (done) break;
+                    
+                    const chunk = decoder.decode(value, { stream: true });
+                    botMsgDiv.textContent += chunk;
+                    chatMessages.scrollTop = chatMessages.scrollHeight;
+                }
+
+            } catch (error) {
+                botMsgDiv.textContent = "서버와 연결할 수 없습니다. (네트워크 오류)";
             }
-        } catch (error) {
-            botMsgDiv.textContent = "서버와 연결할 수 없습니다.";
         }
-        chatMessages.scrollTop = chatMessages.scrollHeight;
-    }
 
-    function handleKeyPress(event) {
-        if (event.key === "Enter") {
-            sendMessage();
+        function handleKeyPress(event) {
+            if (event.key === "Enter") {
+                sendMessage();
+            }
         }
-    }
-</script>
-
+    </script>
 </body>
 </html>
