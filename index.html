@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>사내 RAG 챗봇 (카카오톡 스타일)</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #abc1d1; /* 카카오톡 채팅방 배경색 */
+            font-family: 'Malgun Gothic', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .chat-container {
+            width: 100%;
+            max-width: 420px;
+            height: 100vh;
+            max-height: 750px;
+            background-color: #abc1d1;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        .chat-header {
+            background-color: #f7e600;
+            padding: 15px;
+            font-weight: bold;
+            font-size: 16px;
+            color: #222;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid #e0d000;
+        }
+        .chat-messages {
+            flex: 1;
+            padding: 15px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .message {
+            max-width: 70%;
+            padding: 10px 14px;
+            border-radius: 14px;
+            font-size: 14px;
+            line-height: 1.4;
+            word-break: break-word;
+        }
+        .message.user {
+            background-color: #fee500; /* 카톡 유저 노란색 */
+            color: #111;
+            align-self: flex-end;
+            border-top-right-radius: 2px;
+        }
+        .message.bot {
+            background-color: #ffffff; /* 봇 흰색 */
+            color: #333;
+            align-self: flex-start;
+            border-top-left-radius: 2px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+        .chat-input-area {
+            background-color: #ffffff;
+            padding: 10px;
+            display: flex;
+            gap: 8px;
+            border-top: 1px solid #ddd;
+        }
+        .chat-input-area input {
+            flex: 1;
+            padding: 10px 14px;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            outline: none;
+            font-size: 14px;
+        }
+        .chat-input-area button {
+            background-color: #fee500;
+            border: none;
+            padding: 0 16px;
+            border-radius: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            color: #333;
+        }
+        .chat-input-area button:hover {
+            background-color: #f0d800;
+        }
+    </style>
+</head>
+<body>
+
+<div class="chat-container">
+    <div class="chat-header">💬 사내 문서 AI 어시스턴트 (RAG)</div>
+    <div class="chat-messages" id="chatMessages">
+        <div class="message bot">안녕하세요! 사내 문서(docs) 내용에 대해 무엇이든 물어보세요.</div>
+    </div>
+    <div class="chat-input-area">
+        <input type="text" id="userInput" placeholder="메시지를 입력하세요..." onkeypress="handleKeyPress(event)">
+        <button onclick="sendMessage()">전송</button>
+    </div>
+</div>
+
+<script>
+    // 배포된 Render 백엔드 주소로 변경해주세요 (예: https://my-rag-chatbot.onrender.com)
+    const BACKEND_URL = "https://my-rag-chatbot-igck.onrender.com/chat";
+
+    async function sendMessage() {
+        const inputField = document.getElementById("userInput");
+        const messageText = inputField.value.trim();
+        if (!messageText) return;
+
+        const chatMessages = document.getElementById("chatMessages");
+
+        // 1. 유저 메시지 화면에 추가
+        const userMsgDiv = document.createElement("div");
+        userMsgDiv.className = "message user";
+        userMsgDiv.textContent = messageText;
+        chatMessages.appendChild(userMsgDiv);
+
+        inputField.value = "";
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+
+        // 2. 봇 응답 대기 메시지 추가
+        const botMsgDiv = document.createElement("div");
+        botMsgDiv.className = "message bot";
+        botMsgDiv.textContent = "생각 중...";
+        chatMessages.appendChild(botMsgDiv);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+
+        try {
+            // 3. Render 백엔드로 요청 전송
+            const response = await fetch(BACKEND_URL, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ message: messageText })
+            });
+
+            const data = await response.json();
+            if (response.ok) {
+                botMsgDiv.textContent = data.response;
+            } else {
+                botMsgDiv.textContent = "오류가 발생했습니다: " + (data.detail || "서버 에러");
+            }
+        } catch (error) {
+            botMsgDiv.textContent = "서버와 연결할 수 없습니다.";
+        }
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    function handleKeyPress(event) {
+        if (event.key === "Enter") {
+            sendMessage();
+        }
+    }
+</script>
+
+</body>
+</html>
