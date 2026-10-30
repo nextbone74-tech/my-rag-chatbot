@@ -104,3 +104,9 @@ async def chat_endpoint(request: ChatRequest):
 @app.get("/health")
 async def health_check():
     return {"status": "alive"}
+@app.get("/debug/docs")
+async def debug_docs():
+    return {
+        "cached_file_names": list(DOCS_CACHE.keys()),
+        "total_files": len(DOCS_CACHE)
+    }
